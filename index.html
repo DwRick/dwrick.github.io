@@ -1,54 +1,184 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Jogo da Velha - Simples</title>
-<style>
-  body{display:flex;min-height:100vh;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;margin:0;background:#f0f0f0}
-  .wrap{background:#fff;padding:16px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.08);text-align:center}
-  h1{margin:0 0 12px;font-size:18px}
-  .board{display:grid;grid-template-columns:repeat(3,60px);gap:6px;margin:12px auto}
-  .cell{width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#e9e9e9;border-radius:6px;cursor:pointer;user-select:none}
-  .cell.disabled{pointer-events:none;opacity:0.8}
-  .info{margin-top:8px;font-size:14px}
-  button{margin-top:10px;padding:8px 12px;border-radius:6px;border:none;background:#0077cc;color:#fff;cursor:pointer}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jogo da Velha - Funcional</title>
+  <style>
+    *{box-sizing:border-box}
+    body{
+      font-family: Arial, Helvetica, sans-serif;
+      background:#f4f6f8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+      margin:0;
+    }
+    .container{
+      background:#fff;
+      padding:20px;
+      border-radius:8px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.08);
+      text-align:center;
+      width:320px;
+    }
+    h1{margin:0 0 12px;font-size:20px}
+    #board{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+      margin:12px 0;
+    }
+    .cell{
+      background:#e9eef3;
+      padding:0;
+      height:84px;
+      border-radius:6px;
+      font-size:36px;
+      font-weight:700;
+      color:#0b3659;
+      cursor:pointer;
+      border: none;
+      transition: background .12s, transform .08s;
+    }
+    .cell:active{ transform:translateY(1px) }
+    .cell.disabled{ pointer-events:none; opacity:0.8 }
+    .status{ font-size:14px; color:#334155; min-height:20px }
+    button{
+      margin-top:12px;
+      background:#0b69d6;
+      color:white;
+      border:none;
+      padding:8px 12px;
+      border-radius:6px;
+      cursor:pointer;
+    }
+    .winner { background: #92f5c7 !important; color:#014d30; }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Jogo da Velha (Simples)</h1>
-    <div id="board" class="board"></div>
-    <div class="info" id="status">Vez de: X</div>
-    <button id="reset">Reiniciar</button>
+  <div class="container">
+    <h1>Jogo da Velha</h1>
+    <div id="board" aria-label="Tabuleiro"></div>
+    <div class="status" id="status">Vez de: <strong id="playerLabel">X</strong></div>
+    <button id="restart">Reiniciar</button>
   </div>
 
 <script>
-  const boardEl = document.getElementById('board');
-  const statusEl = document.getElementById('status');
-  const resetBtn = document.getElementById('reset');
+  (function(){
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const playerLabel = document.getElementById('playerLabel');
+    const restartBtn = document.getElementById('restart');
 
-  let board = Array(9).fill(null);
-  let xTurn = true;
-  let finished = false;
+    // estado
+    let board = Array(9).fill(null); // null | 'X' | 'O'
+    let xTurn = true;
+    let finished = false;
 
-  const wins = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
+    const WIN_COMBOS = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
 
-  function createBoard(){
-    boardEl.innerHTML = '';
-    for(let i=0;i<9;i++){
-      const c = document.createElement('div');
-      c.className = 'cell';
-      c.dataset.i = i;
-      c.addEventListener('click', onClickCell);
-      boardEl.appendChild(c);
+    // cria tabuleiro
+    function initBoard(){
+      boardEl.innerHTML = '';
+      for (let i=0;i<9;i++){
+        const btn = document.createElement('button');
+        btn.className = 'cell';
+        btn.type = 'button';
+        btn.dataset.index = i;
+        btn.setAttribute('aria-label', 'Célula ' + (i+1));
+        btn.addEventListener('click', onCellClick);
+        boardEl.appendChild(btn);
+      }
+      updateStatus();
     }
-  }
 
-  function onClickCell(e){
-    if (finished) return;
-    const i = +e.currentTarget.dataset.i;
+    function onCellClick(e){
+      if (finished) return;
+      const idx = Number(e.currentTarget.dataset.index);
+      if (board[idx] !== null) return; // já preenchido
+      board[idx] = xTurn ? 'X' : 'O';
+      render();
+      const winnerInfo = checkWinner();
+      if (winnerInfo){
+        finishGame(winnerInfo);
+        return;
+      }
+      if (board.every(Boolean)){
+        finished = true;
+        statusEl.textContent = 'Empate!';
+        disableEmpty();
+        return;
+      }
+      xTurn = !xTurn;
+      updateStatus();
+    }
+
+    function render(){
+      board.forEach((val, idx) => {
+        const el = boardEl.querySelector('[data-index="'+idx+'"]');
+        el.textContent = val || '';
+        // opcional: marcar classes
+        el.classList.toggle('disabled', Boolean(val));
+      });
+    }
+
+    function checkWinner(){
+      for (const combo of WIN_COMBOS){
+        const [a,b,c] = combo;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]){
+          return { winner: board[a], combo };
+        }
+      }
+      return null;
+    }
+
+    function finishGame(info){
+      finished = true;
+      statusEl.textContent = 'Vencedor: ' + info.winner;
+      // destacar
+      info.combo.forEach(i => {
+        const el = boardEl.querySelector('[data-index="'+i+'"]');
+        if (el) el.classList.add('winner');
+      });
+      disableEmpty();
+    }
+
+    function disableEmpty(){
+      boardEl.querySelectorAll('.cell').forEach((el, idx) => {
+        if (!board[idx]) el.classList.add('disabled');
+      });
+    }
+
+    function updateStatus(){
+      playerLabel.textContent = xTurn ? 'X' : 'O';
+      statusEl.innerHTML = 'Vez de: <strong id="playerLabel">' + (xTurn ? 'X' : 'O') + '</strong>';
+    }
+
+    function reset(){
+      board = Array(9).fill(null);
+      xTurn = true;
+      finished = false;
+      // remover classes e texto
+      initBoard();
+    }
+
+    restartBtn.addEventListener('click', reset);
+
+    // iniciar
+    initBoard();
+
+    // expor para console se precisar depurar
+    window.simpleTicTacToe = {
+      get board(){ return board.slice(); },
+      reset
+    };
+  })();
+</script>
+</body>
+</html>
