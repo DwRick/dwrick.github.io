@@ -3,482 +3,551 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Surpresa</title>
+  <title>Jogo da Velha</title>
   <style>
     :root{
-      --bg1:#0f1022;
-      --bg2:#081027;
-      --accent1:#ff5fa8;
-      --accent2:#7c4dff;
-      --accent3:#00f0ff;
-    }
-    html,body{height:100%;margin:0;background:linear-gradient(120deg,var(--bg1),var(--bg2));font-family:Inter,system-ui,Arial;}
-    .wrap{
-      height:100vh;
-      display:grid;
-      place-items:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      overflow:hidden;
+      --bg: #0f1724;
+      --card: #0b1220;
+      --accent: #7dd3fc;
+      --accent-2: #60a5fa;
+      --muted: #94a3b8;
+      --win: #10b981;
+      --cell-size: min(20vmin, 100px);
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
 
-    /* center card */
-    .stage{
-      width:min(920px,94vw);
-      aspect-ratio:16/9;
-      background: radial-gradient(1200px 600px at 10% 10%, rgba(255,95,168,0.06), transparent 8%),
-                  radial-gradient(900px 400px at 90% 90%, rgba(124,77,255,0.04), transparent 6%),
-                  rgba(255,255,255,0.02);
-      border-radius:22px;
-      box-shadow: 0 10px 40px rgba(2,6,23,0.7), inset 0 1px 0 rgba(255,255,255,0.02);
-      position:relative;
-      overflow:hidden;
-      transform:translateZ(0);
+    html,body{
+      height:100%;
+      margin:0;
+      background: linear-gradient(180deg, #071029 0%, #071224 100%);
+      color: white;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .app {
+      min-height:100vh;
       display:flex;
       align-items:center;
       justify-content:center;
+      padding:24px;
+      box-sizing:border-box;
     }
 
-    /* subtle glass panel */
-    .hud{
-      position:absolute;
-      top:18px; left:18px;
-      color:rgba(255,255,255,0.85);
-      font-weight:600;
-      letter-spacing:0.6px;
-      font-size:13px;
+    .card {
+      width:100%;
+      max-width:920px;
       background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      padding:8px 12px;
+      border:1px solid rgba(255,255,255,0.04);
       border-radius:12px;
-      backdrop-filter: blur(6px) saturate(1.2);
+      padding:20px;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:20px;
+      align-items:start;
+    }
+
+    header{
+      grid-column: 1 / -1;
       display:flex;
-      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:4px;
+    }
+
+    header h1{
+      font-size:20px;
+      margin:0;
+      letter-spacing:0.2px;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
       align-items:center;
     }
 
-    .hud .dot{width:9px;height:9px;border-radius:50%;background:var(--accent1);box-shadow:0 0 14px var(--accent1);}
+    .btn {
+      background: linear-gradient(180deg,var(--accent),var(--accent-2));
+      border:none;
+      color:#04263b;
+      padding:8px 12px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow: 0 4px 14px rgba(96,165,250,0.15);
+    }
+    .btn:active{ transform:translateY(1px); }
+    .btn.ghost {
+      background:transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow:none;
+    }
 
-    /* canvas covers stage */
-    canvas{
-      display:block;
+    main{
+      display:flex;
+      gap:18px;
+      align-items:flex-start;
+    }
+
+    .board-wrap{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:center;
+    }
+
+    .status {
+      font-size:14px;
+      color:var(--muted);
+      min-height:22px;
+    }
+
+    .board {
+      display:grid;
+      grid-template-columns: repeat(3, var(--cell-size));
+      grid-template-rows: repeat(3, var(--cell-size));
+      gap:8px;
+      padding:8px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.03);
+      touch-action: manipulation;
+    }
+
+    .cell {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));
+      border-radius:10px;
+      font-size: clamp(28px, 6vmin, 48px);
+      font-weight:800;
+      color:var(--accent);
+      cursor:pointer;
+      user-select:none;
+      border:1px solid rgba(255,255,255,0.02);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    .cell:focus{
+      outline:3px solid rgba(125,211,252,0.12);
+      transform:translateY(-2px);
+    }
+
+    .cell:hover{
+      transform:translateY(-2px);
+      box-shadow: 0 8px 18px rgba(2,6,23,0.5);
+    }
+
+    .cell.o { color: #fca5a5; }
+    .cell.x { color: #a78bfa; }
+
+    .cell.disabled { cursor:default; opacity:0.9; transform:none; box-shadow:none; }
+
+    .win {
+      background: linear-gradient(90deg, rgba(16,185,129,0.14), rgba(96,165,250,0.06));
+      border:1px solid rgba(16,185,129,0.15);
+      color: var(--win) !important;
+      animation: pop 320ms ease;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.96); opacity:0; }
+      to { transform: scale(1); opacity:1; }
+    }
+
+    .sidebar{
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+      border-radius:10px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,0.03);
       width:100%;
-      height:100%;
-      object-fit:cover;
+      box-sizing:border-box;
     }
 
-    /* bottom-left floating control hints */
-    .hint{
-      position:absolute;
-      left:18px; bottom:18px;
-      font-size:12px;
-      color:rgba(255,255,255,0.8);
-      background:linear-gradient(180deg, rgba(0,0,0,0.32), rgba(255,255,255,0.02));
-      padding:8px 10px;border-radius:10px;
-      backdrop-filter: blur(6px);
+    .score {
+      display:flex;
+      gap:12px;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
     }
 
-    /* top-right radial overlay */
-    .glow{
-      position:absolute;
-      right:-30%; top:-30%;
-      width:80%; height:80%;
-      background: radial-gradient(circle at 20% 30%, rgba(255,95,168,0.14), rgba(124,77,255,0.10) 30%, rgba(0,240,255,0.06) 55%, transparent 60%);
-      filter:blur(60px);
-      pointer-events:none;
-      mix-blend-mode:screen;
+    .score .item{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      align-items:center;
+      min-width:80px;
+    }
+    .score .value{
+      font-size:20px;
+      font-weight:700;
+      color:var(--accent);
     }
 
-    /* subtle footer label */
-    .badge{
-      position:absolute;
-      right:18px; bottom:18px;
-      font-size:11px;color:rgba(255,255,255,0.7);
-      padding:7px 10px;border-radius:10px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
-      backdrop-filter: blur(6px);
+    .small {
+      font-size:13px;
+      color:var(--muted);
     }
 
-    /* responsive tweaks */
-    @media (max-width:600px){
-      .stage{border-radius:14px}
-      .hud{font-size:12px;padding:6px 8px}
-      .hint{font-size:11px}
+    footer{
+      grid-column:1 / -1;
+      border-top:1px dashed rgba(255,255,255,0.02);
+      padding-top:12px;
+      margin-top:8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .controls .toggle {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    @media (max-width:880px){
+      .card{ grid-template-columns: 1fr; }
+      .sidebar{ order:2; }
+      main{ flex-direction:column; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="stage" id="stage">
-      <div class="hud"><div class="dot"></div> toque/click — explore</div>
-      <canvas id="c"></canvas>
-      <div class="glow"></div>
-      <div class="hint">Clique, segure ou arraste</div>
-      <div class="badge">✨feito com HTML • CSS • JS</div>
+  <div class="app">
+    <div class="card" role="application" aria-label="Jogo da Velha">
+      <header>
+        <h1>Jogo da Velha</h1>
+        <div class="controls">
+          <button id="restartBtn" class="btn" title="Reiniciar">Reiniciar</button>
+          <button id="resetScoreBtn" class="btn ghost" title="Zerar placar">Zerar Placar</button>
+        </div>
+      </header>
+
+      <main>
+        <div class="board-wrap">
+          <div class="status" id="status" aria-live="polite">Vez de <strong id="currentPlayerLabel">X</strong></div>
+          <div class="board" id="board" role="grid" aria-label="Tabuleiro do jogo da velha">
+            <!-- 9 cells will be created by JS for better accessibility -->
+          </div>
+        </div>
+
+        <aside class="sidebar" aria-labelledby="scoreTitle">
+          <div id="scoreTitle" class="small">Placar</div>
+          <div class="score" role="list" aria-label="Placar dos jogadores">
+            <div class="item" role="listitem">
+              <div class="small">Jogador X</div>
+              <div id="scoreX" class="value">0</div>
+            </div>
+            <div class="item" role="listitem">
+              <div class="small">Empates</div>
+              <div id="scoreTie" class="value">0</div>
+            </div>
+            <div class="item" role="listitem">
+              <div class="small">Jogador O</div>
+              <div id="scoreO" class="value">0</div>
+            </div>
+          </div>
+
+          <hr style="opacity:0.06;border:none;height:1px;margin:10px 0;background:linear-gradient(90deg,transparent,#222,transparent)">
+
+          <div class="small" style="margin-bottom:8px">Instruções</div>
+          <ul class="small" style="margin:0 0 12px 18px;">
+            <li>Clique ou toque em uma célula para jogar.</li>
+            <li>Use Tab para navegar e Enter/Espaço para marcar pelo teclado.</li>
+            <li>A linha vencedora é destacada.</li>
+          </ul>
+
+          <div style="display:flex;gap:8px">
+            <button id="undoBtn" class="btn ghost" title="Desfazer último movimento">Desfazer (1)</button>
+            <button id="aiBtn" class="btn ghost" title="Ativar/Desativar sugestão">Sugestão</button>
+          </div>
+        </aside>
+      </main>
+
+      <footer>
+        <div class="small">Feito com ♥ — Duas pessoas locais. Versão simples.</div>
+        <div class="small">Última atualização: 28/11/2025</div>
+      </footer>
     </div>
   </div>
 
   <script>
-  // ---------- Utils ----------
-  const TAU = Math.PI * 2;
-  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-  const rand = (a,b)=>a + Math.random()*(b-a);
-  const randInt = (a,b)=>Math.floor(rand(a,b+1));
+    // Jogo da Velha — JS puro
+    (function(){
+      const boardEl = document.getElementById('board');
+      const statusEl = document.getElementById('status');
+      const currentPlayerLabel = document.getElementById('currentPlayerLabel');
+      const restartBtn = document.getElementById('restartBtn');
+      const resetScoreBtn = document.getElementById('resetScoreBtn');
+      const scoreXEl = document.getElementById('scoreX');
+      const scoreOEl = document.getElementById('scoreO');
+      const scoreTieEl = document.getElementById('scoreTie');
+      const undoBtn = document.getElementById('undoBtn');
+      const aiBtn = document.getElementById('aiBtn');
 
-  // ---------- Setup ----------
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
-  let DPR = Math.min(2, window.devicePixelRatio || 1);
+      // estado do jogo
+      let board = Array(9).fill(null); // células: null | 'X' | 'O'
+      let xIsNext = true;
+      let gameOver = false;
+      let scores = { X: 0, O: 0, TIE: 0 };
+      let history = []; // para undo (salva index jogado)
+      let suggestionOn = false; // marca sugestão (dica)
 
-  function resize(){
-    DPR = Math.min(2, window.devicePixelRatio || 1);
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * DPR);
-    canvas.height = Math.floor(rect.height * DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-  }
-  window.addEventListener('resize', resize, {passive:true});
-  resize();
+      // Combinações vencedoras (índices)
+      const WIN_COMBOS = [
+        [0,1,2], [3,4,5], [6,7,8], // linhas
+        [0,3,6], [1,4,7], [2,5,8], // colunas
+        [0,4,8], [2,4,6]           // diagonais
+      ];
 
-  // ---------- Heart path parametric ----------
-  // parametric heart function (x(t), y(t)) centered in given box
-  function heartPoint(t, size){
-    // classic heart parametric scaled
-    // t in [0,2PI]
-    const x = 16*Math.pow(Math.sin(t),3);
-    const y = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
-    return {x: x * size, y: -y * size}; // invert y
-  }
-
-  // convert parametric to polygon approximations
-  function buildHeartPath(cx, cy, size, rotation=0){
-    const pts = [];
-    const steps = 180;
-    for(let i=0;i<=steps;i++){
-      const t = i/steps * TAU;
-      const p = heartPoint(t, size);
-      // rotate
-      const rx = p.x*Math.cos(rotation) - p.y*Math.sin(rotation);
-      const ry = p.x*Math.sin(rotation) + p.y*Math.cos(rotation);
-      pts.push({x: cx + rx, y: cy + ry});
-    }
-    return pts;
-  }
-
-  // ---------- Particles ----------
-  class Particle{
-    constructor(x,y, vx, vy, size, life, hue, glow){
-      this.x = x; this.y = y; this.vx = vx; this.vy = vy;
-      this.size = size; this.life = life; this.maxLife = life;
-      this.hue = hue; this.glow = glow;
-      this.drag = 0.992 - Math.random()*0.005;
-      this.spin = (Math.random()-0.5)*0.04;
-    }
-    update(dt){
-      this.vx *= this.drag;
-      this.vy *= this.drag;
-      this.vy += 20*dt; // gravity
-      this.x += this.vx*dt;
-      this.y += this.vy*dt;
-      this.size *= (1 - 0.14*dt);
-      this.life -= dt;
-    }
-    draw(ctx){
-      const alpha = clamp(this.life/this.maxLife, 0,1);
-      ctx.save();
-      ctx.translate(this.x, this.y);
-      ctx.rotate(this.spin);
-      const g = ctx.createRadialGradient(0,0,this.size*0.1, 0,0,this.size*1.6);
-      g.addColorStop(0, `hsla(${this.hue},95%,65%,${alpha})`);
-      g.addColorStop(1, `hsla(${(this.hue+40)%360},90%,40%,0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(0,0,this.size,0,TAU);
-      ctx.fill();
-      ctx.restore();
-
-      if(this.glow){
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.fillStyle = `hsla(${this.hue},95%,65%,${alpha*0.08})`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size*6, 0, TAU);
-        ctx.fill();
-        ctx.restore();
+      // Cria células dinamicamente (melhora acessibilidade e associação)
+      function createBoard() {
+        boardEl.innerHTML = '';
+        for (let i=0;i<9;i++){
+          const btn = document.createElement('button');
+          btn.className = 'cell';
+          btn.type = 'button';
+          btn.setAttribute('role','gridcell');
+          btn.setAttribute('aria-label', `Célula ${i+1}`);
+          btn.dataset.index = i;
+          btn.addEventListener('click', onCellClick);
+          btn.addEventListener('keydown', onCellKeyDown);
+          boardEl.appendChild(btn);
+        }
       }
-    }
-  }
 
-  const particles = [];
-
-  function emitBurst(x,y, count=40, hueBase=330){
-    for(let i=0;i<count;i++){
-      const ang = rand(0,TAU);
-      const spd = rand(60,420);
-      const vx = Math.cos(ang)*spd;
-      const vy = Math.sin(ang)*spd;
-      const sz = rand(3,16);
-      const life = rand(0.6,1.7);
-      const hue = (hueBase + rand(-30,40)) % 360;
-      const glow = Math.random() > 0.2;
-      particles.push(new Particle(x,y,vx,vy,sz,life,hue,glow));
-    }
-  }
-
-  // gentle continuous emitter along heart
-  let timeSinceEmit = 0;
-
-  // ---------- Interactive heart pulse ----------
-  let pulse = 0;
-  let pulseTarget = 0;
-  let t = 0;
-
-  // heart path for collision checks and fill
-  function drawHeartFilled(ctx, cx, cy, size, phaseRotation, gradient){
-    const pts = buildHeartPath(cx, cy, size, phaseRotation);
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for(let i=1;i<pts.length;i++){
-      ctx.lineTo(pts[i].x, pts[i].y);
-    }
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
-    ctx.restore();
-    return pts;
-  }
-
-  // helper: point inside polygon (ray-casting)
-  function pointInPoly(x,y, poly){
-    let inside=false;
-    for(let i=0,j=poly.length-1;i<poly.length;j=i++){
-      const xi=poly[i].x, yi=poly[i].y;
-      const xj=poly[j].x, yj=poly[j].y;
-      const intersect = ((yi>y) !== (yj>y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi);
-      if(intersect) inside = !inside;
-    }
-    return inside;
-  }
-
-  // ---------- Mouse / Touch ----------
-  const stage = document.getElementById('stage');
-  let pointer = {x:0,y:0,down:false};
-  function setPointerFromEvent(e){
-    const r = canvas.getBoundingClientRect();
-    let clientX, clientY;
-    if(e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
-    else { clientX = e.clientX; clientY = e.clientY; }
-    pointer.x = (clientX - r.left);
-    pointer.y = (clientY - r.top);
-  }
-
-  window.addEventListener('pointerdown', (ev)=>{ pointer.down=true; setPointerFromEvent(ev); pointer.id=ev.pointerId; pulseTarget=1.9; emitBurst(pointer.x, pointer.y, 55, 330); });
-  window.addEventListener('pointermove', (ev)=>{ setPointerFromEvent(ev); if(pointer.down){ emitBurst(pointer.x,pointer.y, 6, 320); }} , {passive:true});
-  window.addEventListener('pointerup', ()=>{ pointer.down=false; pulseTarget=0; });
-  window.addEventListener('pointercancel', ()=>{ pointer.down=false; pulseTarget=0; });
-
-  // ---------- Floating hearts (soft shapes) ----------
-  class Floating{
-    constructor(x,y,size,hue,delay){
-      this.x=x; this.y=y; this.size=size; this.hue=hue; this.delay=delay;
-      this.phase = Math.random()*TAU;
-    }
-    update(dt){
-      this.phase += dt*(0.6 + this.size*0.02);
-      this.y += Math.sin(this.phase*0.7 + this.delay)*0.2;
-      this.x += Math.cos(this.phase*0.8 + this.delay)*0.12;
-    }
-    draw(ctx, pts){
-      // draw small heart at x,y relative to stage
-      ctx.save();
-      ctx.translate(this.x, this.y);
-      ctx.scale(1,1);
-      ctx.beginPath();
-      // simple heart using bezier
-      const s = this.size;
-      ctx.moveTo(0, -s*0.45);
-      ctx.bezierCurveTo(s*0.5, -s*0.85, s*1.3, -s*0.2, 0, s*0.8);
-      ctx.bezierCurveTo(-s*1.3, -s*0.2, -s*0.5, -s*0.85, 0, -s*0.45);
-      ctx.closePath();
-      ctx.fillStyle = `hsla(${this.hue},92%,60%,0.88)`;
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
-  const floaters = [];
-  // ---------- Main loop ----------
-  let last = performance.now();
-  function loop(now){
-    const dt = Math.min(0.033, (now - last) / 1000);
-    last = now;
-    t += dt;
-
-    // clear canvas with gentle gradient
-    const W = canvas.width / DPR;
-    const H = canvas.height / DPR;
-    ctx.clearRect(0,0,W,H);
-
-    // background vignette
-    const bgG = ctx.createLinearGradient(0,0,W,H);
-    bgG.addColorStop(0, 'rgba(10,6,22,0.14)');
-    bgG.addColorStop(1, 'rgba(2,6,12,0.18)');
-    ctx.fillStyle = bgG;
-    ctx.fillRect(0,0,W,H);
-
-    // compute heart geometry
-    const cx = W*0.5;
-    const cy = H*0.52;
-    // size scales with short dimension
-    const baseSize = (Math.min(W,H) / 28);
-    // breathing effect
-    pulse += (pulseTarget - pulse) * (1 - Math.pow(0.03, dt*60));
-    const size = baseSize * (1 + 0.08*Math.sin(t*3.2) + 0.18 * Math.max(0, pulse));
-    const rotation = Math.sin(t*0.8)*0.03;
-
-    // gradient fill for main heart
-    const grad = ctx.createLinearGradient(cx - size*20, cy - size*40, cx + size*20, cy + size*40);
-    grad.addColorStop(0, 'rgba(255,95,168,0.98)');
-    grad.addColorStop(0.45, 'rgba(124,77,255,0.96)');
-    grad.addColorStop(1, 'rgba(0,240,255,0.88)');
-
-    // draw outer glow via multiple scaled fills
-    for(let i=5;i>=1;i--){
-      const alpha = 0.06 * (i);
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.filter = `blur(${(8*i)}px)`;
-      const pts = buildHeartPath(cx, cy, size*(1 + i*0.06), rotation);
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for(let j=1;j<pts.length;j++) ctx.lineTo(pts[j].x, pts[j].y);
-      ctx.closePath();
-      ctx.fillStyle = `rgba(255,95,168,${alpha})`;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // filled heart
-    const heartPts = buildHeartPath(cx, cy, size, rotation);
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(heartPts[0].x, heartPts[0].y);
-    for(let i=1;i<heartPts.length;i++) ctx.lineTo(heartPts[i].x, heartPts[i].y);
-    ctx.closePath();
-
-    // subtle inner shadow
-    ctx.shadowColor = 'rgba(0,0,0,0.35)';
-    ctx.shadowBlur = 24;
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.restore();
-
-    // glossy highlight
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-    ctx.beginPath();
-    ctx.ellipse(cx - size*6, cy - size*10, size*7, size*10, -0.5, 0, TAU);
-    ctx.fillStyle = 'rgba(255,255,255,0.07)';
-    ctx.fill();
-    ctx.restore();
-
-    // emitter along heart perimeter
-    timeSinceEmit += dt;
-    if(timeSinceEmit > 0.06){
-      timeSinceEmit = 0;
-      // pick a random point on heart poly
-      const pi = Math.floor(rand(0,heartPts.length-1));
-      const p = heartPts[pi];
-      // emit gentle particles
-      emitBurst(p.x + rand(-4,4), p.y + rand(-4,4), randInt(1,3), 320 + Math.sin(t*2)*40);
-    }
-
-    // update and draw particles
-    for(let i = particles.length-1; i>=0; i--){
-      const p = particles[i];
-      p.update(dt);
-      p.draw(ctx);
-      if(p.life <= 0 || p.size < 0.6) particles.splice(i,1);
-    }
-
-    // floating little hearts
-    if(floaters.length < 10 && Math.random() < 0.02){
-      const angle = rand(0,TAU);
-      const r = size * rand(0.65,1.1);
-      const fx = cx + Math.cos(angle)*r;
-      const fy = cy + Math.sin(angle)*r*0.9;
-      floaters.push(new Floating(fx, fy, rand(8,20), randInt(300,360), Math.random()*2));
-    }
-    for(let i=floaters.length-1;i>=0;i--){
-      const f = floaters[i];
-      f.update(dt);
-      f.draw(ctx, heartPts);
-      if(Math.random() < 0.002 && particles.length < 600){
-        emitBurst(f.x, f.y, randInt(3,8), f.hue);
+      function onCellKeyDown(e){
+        if (e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          e.currentTarget.click();
+        }
+        // permitir navegação por setas (opcional)
+        const idx = Number(e.currentTarget.dataset.index);
+        if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
+          e.preventDefault();
+          const coords = indexToCoord(idx);
+          let [r,c] = coords;
+          if (e.key === 'ArrowLeft') c = (c+2)%3;
+          if (e.key === 'ArrowRight') c = (c+1)%3;
+          if (e.key === 'ArrowUp') r = (r+2)%3;
+          if (e.key === 'ArrowDown') r = (r+1)%3;
+          const nextIndex = coordToIndex(r,c);
+          const nextEl = boardEl.querySelector(\`[data-index="\${nextIndex}"]\`);
+          nextEl && nextEl.focus();
+        }
       }
-      if(Math.random() < 0.001 && floaters.length > 6) floaters.splice(i,1);
-    }
 
-    // hover pointer interaction: if pointer inside heart, make tiny sparkles
-    if(pointInPoly(pointer.x, pointer.y, heartPts)){
-      // gentle bubble
-      if(Math.random() < 0.22) emitBurst(pointer.x + rand(-6,6), pointer.y + rand(-6,6), randInt(1,3), 340);
-      // soft pulse
-      pulseTarget = clamp(pulseTarget + 0.02, 0, 2.4);
-    } else {
-      if(!pointer.down) pulseTarget = Math.max(0, pulseTarget - 0.03);
-    }
+      function indexToCoord(i){ return [Math.floor(i/3), i%3]; }
+      function coordToIndex(r,c){ return r*3 + c; }
 
-    // subtle sparkles overlay
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for(let i=0;i<8;i++){
-      ctx.beginPath();
-      const x = cx + Math.cos(t*0.7 + i)*size*(0.6 + 0.12*i);
-      const y = cy + Math.sin(t*0.9 - i*0.6)*size*(0.6 + 0.06*i);
-      const s = 1.2 + i*0.4;
-      ctx.fillStyle = `rgba(255,255,255,${0.02 + i*0.01})`;
-      ctx.arc(x,y,s,0,TAU);
-      ctx.fill();
-    }
-    ctx.restore();
+      function onCellClick(e){
+        const idx = Number(e.currentTarget.dataset.index);
+        if (gameOver) return;
+        if (board[idx] !== null) return;
+        makeMove(idx);
+      }
 
-    // tiny animated outline stroke
-    ctx.save();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = `rgba(255,255,255,0.06)`;
-    ctx.beginPath();
-    ctx.moveTo(heartPts[0].x, heartPts[0].y);
-    for(let i=1;i<heartPts.length;i++) ctx.lineTo(heartPts[i].x, heartPts[i].y);
-    ctx.closePath();
-    ctx.stroke();
+      // Faz movimento
+      function makeMove(idx){
+        const player = xIsNext ? 'X' : 'O';
+        board[idx] = player;
+        history.push(idx);
+        render();
+        const result = checkWinner(board);
+        if (result) {
+          finishGame(result);
+          return;
+        }
+        if (board.every(cell => cell !== null)){
+          // empate
+          scores.TIE++;
+          scoreTieEl.textContent = scores.TIE;
+          statusEl.textContent = 'Empate!';
+          gameOver = true;
+          highlightTie();
+          return;
+        }
+        xIsNext = !xIsNext;
+        updateStatus();
+        if (suggestionOn) showSuggestion();
+      }
 
-    // finish frame
-    requestAnimationFrame(loop);
-  }
+      // Checa vencedor; retorna {winner: 'X'|'O', combo: [...] } ou null
+      function checkWinner(b){
+        for (const combo of WIN_COMBOS){
+          const [a,b1,c] = combo;
+          if (b[a] && b[a] === b[b1] && b[a] === b[c]){
+            return { winner: b[a], combo };
+          }
+        }
+        return null;
+      }
 
-  // initial burst animation sequence
-  function kickoff(){
-    // adaptive size check
-    resize();
-    // center burst
-    const W = canvas.width / DPR;
-    const H = canvas.height / DPR;
-    emitBurst(W*0.5, H*0.52, 120, 340);
-    pulseTarget = 1.8;
-    setTimeout(()=>pulseTarget=0, 900);
-  }
+      function finishGame(result){
+        const { winner, combo } = result;
+        gameOver = true;
+        // atualizar placar
+        scores[winner]++;
+        if (winner === 'X') scoreXEl.textContent = scores.X;
+        else scoreOEl.textContent = scores.O;
+        statusEl.innerHTML = \`Jogador <strong>\${winner}</strong> venceu!\`;
+        // destacar células vencedoras
+        combo.forEach(i => {
+          const el = boardEl.querySelector(\`[data-index="\${i}"]\`);
+          if (el){
+            el.classList.add('win');
+          }
+        });
+        // desabilitar células restantes visualmente
+        boardEl.querySelectorAll('.cell').forEach(el=>{
+          el.classList.add('disabled');
+        });
+      }
 
-  // start
-  requestAnimationFrame(loop);
-  setTimeout(kickoff, 220);
+      function highlightTie(){
+        // anima levemente todas as células
+        boardEl.querySelectorAll('.cell').forEach(el=>{
+          el.classList.add('disabled');
+        });
+      }
 
-  // initial pointer positioning (center)
-  pointer.x = canvas.width / DPR / 2;
-  pointer.y = canvas.height / DPR / 2;
+      function updateStatus(){
+        currentPlayerLabel.textContent = xIsNext ? 'X' : 'O';
+        statusEl.innerHTML = \`Vez de <strong id="currentPlayerLabel">\${xIsNext ? 'X' : 'O'}</strong>\`;
+      }
 
-  // improve responsiveness on load
-  window.addEventListener('load', resize);
+      function render(){
+        // atualiza células do tabuleiro
+        board.forEach((val, idx) => {
+          const el = boardEl.querySelector(\`[data-index="\${idx}"]\`);
+          if (!el) return;
+          el.textContent = val ? val : '';
+          el.classList.remove('x','o','win','disabled');
+          if (val === 'X') el.classList.add('x','disabled');
+          if (val === 'O') el.classList.add('o','disabled');
+        });
+      }
+
+      function resetBoard(keepScore = true){
+        board = Array(9).fill(null);
+        xIsNext = true;
+        gameOver = false;
+        history = [];
+        suggestionOn = false;
+        aiBtn.textContent = 'Sugestão';
+        createBoard();
+        render();
+        updateStatus();
+      }
+
+      // Reinicia tudo (placar também)
+      function fullReset(){
+        scores = { X:0, O:0, TIE:0 };
+        scoreXEl.textContent = 0;
+        scoreOEl.textContent = 0;
+        scoreTieEl.textContent = 0;
+        resetBoard(true);
+      }
+
+      // Desfazer último movimento (1 nível)
+      function undo(){
+        if (history.length === 0 || gameOver) return;
+        const last = history.pop();
+        board[last] = null;
+        xIsNext = !xIsNext; // reverte jogador
+        gameOver = false;
+        render();
+        updateStatus();
+      }
+
+      // Sugestão simples: joga no primeiro lugar que vence, senão bloqueia, senão canto, senão centro, senão borda.
+      function computeBestMove(player){
+        // First, can we win?
+        for (let i=0;i<9;i++){
+          if (board[i] !== null) continue;
+          const copy = board.slice();
+          copy[i] = player;
+          if (checkWinner(copy)) return i;
+        }
+        const opponent = player === 'X' ? 'O' : 'X';
+        // Block opponent
+        for (let i=0;i<9;i++){
+          if (board[i] !== null) continue;
+          const copy = board.slice();
+          copy[i] = opponent;
+          if (checkWinner(copy)) return i;
+        }
+        // Prioritize center, corners, then edges
+        const center = 4;
+        const corners = [0,2,6,8];
+        const edges = [1,3,5,7];
+        if (board[center] === null) return center;
+        for (const c of corners) if (board[c] === null) return c;
+        for (const e of edges) if (board[e] === null) return e;
+        return null;
+      }
+
+      function showSuggestion(){
+        // remove previous hints
+        boardEl.querySelectorAll('.cell').forEach(el => el.style.boxShadow = '');
+        if (gameOver) return;
+        const player = xIsNext ? 'X' : 'O';
+        const best = computeBestMove(player);
+        if (best === null) return;
+        const el = boardEl.querySelector(\`[data-index="\${best}"]\`);
+        if (el){
+          el.style.boxShadow = '0 10px 30px rgba(125,211,252,0.14) inset';
+        }
+      }
+
+      // Inicialização
+      createBoard();
+      resetBoard(true);
+
+      // Event listeners
+      restartBtn.addEventListener('click', ()=> resetBoard(true));
+      resetScoreBtn.addEventListener('click', ()=> {
+        if (confirm('Deseja zerar o placar?')) fullReset();
+      });
+      undoBtn.addEventListener('click', ()=> undo());
+
+      // Sugestão toggle
+      aiBtn.addEventListener('click', ()=>{
+        suggestionOn = !suggestionOn;
+        aiBtn.textContent = suggestionOn ? 'Sugestão: ON' : 'Sugestão';
+        if (suggestionOn) showSuggestion();
+        else boardEl.querySelectorAll('.cell').forEach(el=> el.style.boxShadow = '');
+      });
+
+      // keyboard shortcuts: R = restart, U = undo, S = suggestion toggle
+      window.addEventListener('keydown', (e)=>{
+        if (e.key.toLowerCase() === 'r') { resetBoard(true); }
+        if (e.key.toLowerCase() === 'u') { undo(); }
+        if (e.key.toLowerCase() === 's') { suggestionOn = !suggestionOn; aiBtn.click(); }
+      });
+
+      // Força render quando a janela muda (responsividade de tamanho de célula)
+      window.addEventListener('resize', ()=> {
+        // noop por enquanto, mas útil se quiser reagir
+      });
+
+      // Expor variáveis para debug no console (opcional)
+      window.tictactoe = {
+        get board(){ return board.slice(); },
+        get scores(){ return {...scores}; },
+        resetBoard, fullReset, makeMove, undo
+      };
+    })();
   </script>
 </body>
 </html>
