@@ -3,182 +3,466 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Jogo da Velha - Funcional</title>
+  <title>Jogo da Velha — Brabo</title>
   <style>
+    :root{
+      --bg1: #0f172a;
+      --bg2: #071033;
+      --card: #0b1220;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --glass: rgba(255,255,255,0.03);
+      --muted: #9aa4b2;
+      --win: #10b981;
+      --draw: #f59e0b;
+      --text: #e6eef8;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      font-family: Arial, Helvetica, sans-serif;
-      background:#f4f6f8;
+      margin:0;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.08), transparent 8%),
+                  radial-gradient(1000px 500px at 90% 90%, rgba(6,182,212,0.06), transparent 6%),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--text);
       display:flex;
       align-items:center;
       justify-content:center;
-      height:100vh;
-      margin:0;
+      padding:28px;
     }
+
     .container{
-      background:#fff;
+      width:100%;
+      max-width:980px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px;
       padding:20px;
-      border-radius:8px;
-      box-shadow:0 8px 24px rgba(0,0,0,0.08);
-      text-align:center;
-      width:320px;
+      box-shadow: 0 10px 40px rgba(2,6,23,0.65), inset 0 1px 0 rgba(255,255,255,0.02);
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:20px;
+      align-items:start;
     }
-    h1{margin:0 0 12px;font-size:20px}
-    #board{
+
+    header{
+      grid-column:1 / -1;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:4px;
+    }
+    h1{font-size:20px;margin:0;letter-spacing:0.2px}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .board-card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+      padding:18px;
+      border-radius:12px;
+      min-height:420px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+    }
+
+    .board{
+      width:100%;
+      max-width:520px;
+      aspect-ratio:1/1;
       display:grid;
       grid-template-columns:repeat(3,1fr);
-      gap:8px;
-      margin:12px 0;
+      gap:14px;
+      padding:14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));
+      border-radius:12px;
+      box-shadow: 0 8px 26px rgba(2,6,23,0.5);
     }
+
     .cell{
-      background:#e9eef3;
-      padding:0;
-      height:84px;
-      border-radius:6px;
-      font-size:36px;
-      font-weight:700;
-      color:#0b3659;
+      background:var(--glass);
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:56px;
       cursor:pointer;
-      border: none;
-      transition: background .12s, transform .08s;
+      user-select:none;
+      transition:transform .12s ease, background .12s ease, box-shadow .12s ease;
+      position:relative;
+      overflow:hidden;
+      aspect-ratio:1/1;
+      color:var(--text);
+      outline: none;
+      border: 1px solid rgba(255,255,255,0.03);
     }
-    .cell:active{ transform:translateY(1px) }
-    .cell.disabled{ pointer-events:none; opacity:0.8 }
-    .status{ font-size:14px; color:#334155; min-height:20px }
-    button{
-      margin-top:12px;
-      background:#0b69d6;
-      color:white;
-      border:none;
-      padding:8px 12px;
-      border-radius:6px;
+    .cell:focus{ box-shadow: 0 0 0 4px rgba(124,58,237,0.12); transform: translateY(-3px); }
+    .cell:hover{ transform:translateY(-4px) scale(1.01); background: rgba(255,255,255,0.035); }
+
+    .cell.disabled{ cursor:not-allowed; opacity:0.88; transform:none; }
+
+    .cell.x{ color: #f97316; font-weight:700; }
+    .cell.o{ color: #60a5fa; font-weight:700; }
+
+    .cell.win{
+      background: linear-gradient(90deg, rgba(16,185,129,0.12), rgba(124,58,237,0.06));
+      box-shadow: 0 6px 18px rgba(16,185,129,0.08);
+      transform: scale(1.02);
+    }
+
+    .status{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .status .msg{ font-size:15px; color:var(--text); }
+    .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+    .btn{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:10px;
       cursor:pointer;
+      font-size:14px;
+      transition: transform .12s ease, background .12s ease;
     }
-    .winner { background: #92f5c7 !important; color:#014d30; }
+    .btn:hover{ transform: translateY(-3px); }
+    .btn.ghost{ background:transparent; border:1px dashed rgba(255,255,255,0.03); }
+
+    aside{
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+      border-radius:12px;
+      padding:16px;
+      min-height:320px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:stretch;
+    }
+
+    .score{
+      display:flex;
+      gap:12px;
+      justify-content:space-between;
+      align-items:center;
+      background: rgba(255,255,255,0.02);
+      padding:12px;
+      border-radius:10px;
+    }
+    .score .who{ font-size:13px; color:var(--muted); }
+    .score .num{ font-size:20px; font-weight:700; color:var(--text); }
+
+    .legend{ font-size:13px; color:var(--muted); }
+
+    footer.small{ font-size:12px; color:var(--muted); text-align:center; margin-top:6px; }
+
+    @media (max-width:840px){
+      .container{ grid-template-columns: 1fr; padding:16px;}
+      aside{ order:2; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Jogo da Velha</h1>
-    <div id="board" aria-label="Tabuleiro"></div>
-    <div class="status" id="status">Vez de: <strong id="playerLabel">X</strong></div>
-    <button id="restart">Reiniciar</button>
+  <div class="container" role="application" aria-label="Jogo da Velha">
+    <header>
+      <div>
+        <h1>Jogo da Velha — Brabo</h1>
+        <p class="lead">Dois jogadores. Marque 3 no mesmo alinhamento. Suporta teclado e mouse.</p>
+      </div>
+
+      <div class="controls" aria-hidden="false">
+        <button class="btn" id="btn-reset" title="Reiniciar partida">Reiniciar partida</button>
+        <button class="btn ghost" id="btn-reset-scores" title="Zerar placar">Zerar placar</button>
+      </div>
+    </header>
+
+    <main class="board-card" id="main">
+      <div class="status" aria-live="polite">
+        <div class="msg" id="statusMsg">Vez de <strong id="currentPlayer">X</strong></div>
+        <div class="legend">Dica: use Tab para navegar e Enter/Espaço para jogar</div>
+      </div>
+
+      <div class="board" id="board" role="grid" aria-label="tabuleiro do jogo da velha">
+        <!-- 9 cells geradas por JS -->
+      </div>
+
+      <div style="width:100%; display:flex; justify-content:center; gap:10px; margin-top:6px;">
+        <button class="btn" id="btn-undo" title="Desfazer último movimento (não disponível no empate)">Desfazer</button>
+        <button class="btn ghost" id="btn-random" title="Faz jogada aleatória">Jogada aleatória</button>
+      </div>
+
+      <footer class="small">Feito com 💜 — jogue com calma e divirta-se!</footer>
+    </main>
+
+    <aside>
+      <div class="score" aria-hidden="false">
+        <div>
+          <div class="who">Jogador X</div>
+          <div class="num" id="scoreX">0</div>
+        </div>
+        <div>
+          <div class="who">Empates</div>
+          <div class="num" id="scoreD">0</div>
+        </div>
+        <div>
+          <div class="who">Jogador O</div>
+          <div class="num" id="scoreO">0</div>
+        </div>
+      </div>
+
+      <div style="padding:6px 8px; border-radius:8px; background: rgba(255,255,255,0.01);">
+        <strong>Regras rápidas</strong>
+        <p style="margin:6px 0 0 0; color:var(--muted); font-size:13px;">
+          Dois jogadores: X e O. X começa. Quem fizer 3 símbolos em linha (horizontal, vertical ou diagonal) vence.
+        </p>
+      </div>
+
+      <div style="padding:6px 8px; border-radius:8px; background: rgba(255,255,255,0.01);">
+        <strong>Controles</strong>
+        <ul style="margin:6px 0 0 16px; color:var(--muted); font-size:13px;">
+          <li>Mouse: clique na célula.</li>
+          <li>Teclado: Tab para navegar, Enter/Espaço para jogar.</li>
+          <li>Desfazer: desfaz a última jogada.</li>
+        </ul>
+      </div>
+
+      <div style="margin-top:auto; color:var(--muted); font-size:12px;">Dica: para tornar o jogo contra IA, me pede que eu implemente o modo contra computador.</div>
+    </aside>
   </div>
 
-<script>
-  (function(){
+  <script>
+    /* Jogo da Velha — JavaScript
+       Recursos:
+       - Dois jogadores locais (X começa)
+       - Destaque da linha vencedora
+       - Placar persistente via localStorage
+       - Undo da última jogada
+       - Jogada aleatória (útil para testes)
+       - Acessibilidade (tabindex + keyboard)
+    */
+
+    // Elementos
     const boardEl = document.getElementById('board');
-    const statusEl = document.getElementById('status');
-    const playerLabel = document.getElementById('playerLabel');
-    const restartBtn = document.getElementById('restart');
+    const statusMsg = document.getElementById('statusMsg');
+    const currentPlayerEl = document.getElementById('currentPlayer');
+    const btnReset = document.getElementById('btn-reset');
+    const btnResetScores = document.getElementById('btn-reset-scores');
+    const btnUndo = document.getElementById('btn-undo');
+    const btnRandom = document.getElementById('btn-random');
+    const scoreXEl = document.getElementById('scoreX');
+    const scoreOEl = document.getElementById('scoreO');
+    const scoreDEl = document.getElementById('scoreD');
 
-    // estado
+    // Estado
     let board = Array(9).fill(null); // null | 'X' | 'O'
-    let xTurn = true;
-    let finished = false;
-
+    let currentPlayer = 'X';
+    let playing = true;
+    let history = []; // armazenar movimentos para undo
     const WIN_COMBOS = [
-      [0,1,2],[3,4,5],[6,7,8],
-      [0,3,6],[1,4,7],[2,5,8],
-      [0,4,8],[2,4,6]
+      [0,1,2], [3,4,5], [6,7,8], // horizontais
+      [0,3,6], [1,4,7], [2,5,8], // verticais
+      [0,4,8], [2,4,6]           // diagonais
     ];
 
-    // cria tabuleiro
-    function initBoard(){
+    // Placar (localStorage)
+    let scores = { X:0, O:0, D:0 };
+    try {
+      const saved = JSON.parse(localStorage.getItem('tictactoe_scores_v1'));
+      if(saved) scores = saved;
+    } catch(e){ /* ignore */ }
+    updateScoreUI();
+
+    // Inicializa tabuleiro visual
+    function createBoardUI(){
       boardEl.innerHTML = '';
-      for (let i=0;i<9;i++){
-        const btn = document.createElement('button');
-        btn.className = 'cell';
-        btn.type = 'button';
-        btn.dataset.index = i;
-        btn.setAttribute('aria-label', 'Célula ' + (i+1));
-        btn.addEventListener('click', onCellClick);
-        boardEl.appendChild(btn);
+      for(let i=0;i<9;i++){
+        const cell = document.createElement('button');
+        cell.className = 'cell';
+        cell.setAttribute('data-index', i);
+        cell.setAttribute('role','gridcell');
+        cell.setAttribute('aria-label', 'Célula ' + (i+1));
+        cell.setAttribute('tabindex', '0');
+        cell.addEventListener('click', onCellClick);
+        cell.addEventListener('keydown', onCellKeyDown);
+        boardEl.appendChild(cell);
       }
-      updateStatus();
     }
 
-    function onCellClick(e){
-      if (finished) return;
-      const idx = Number(e.currentTarget.dataset.index);
-      if (board[idx] !== null) return; // já preenchido
-      board[idx] = xTurn ? 'X' : 'O';
-      render();
-      const winnerInfo = checkWinner();
-      if (winnerInfo){
-        finishGame(winnerInfo);
-        return;
-      }
-      if (board.every(Boolean)){
-        finished = true;
-        statusEl.textContent = 'Empate!';
-        disableEmpty();
-        return;
-      }
-      xTurn = !xTurn;
-      updateStatus();
+    // Atualiza display do placar
+    function updateScoreUI(){
+      scoreXEl.textContent = scores.X;
+      scoreOEl.textContent = scores.O;
+      scoreDEl.textContent = scores.D;
+      localStorage.setItem('tictactoe_scores_v1', JSON.stringify(scores));
     }
 
+    // Render board (textos e classes)
     function render(){
-      board.forEach((val, idx) => {
-        const el = boardEl.querySelector('[data-index="'+idx+'"]');
-        el.textContent = val || '';
-        // opcional: marcar classes
-        el.classList.toggle('disabled', Boolean(val));
+      const cells = boardEl.querySelectorAll('.cell');
+      cells.forEach((cell, idx) => {
+        const val = board[idx];
+        cell.textContent = val ? val : '';
+        cell.classList.toggle('x', val === 'X');
+        cell.classList.toggle('o', val === 'O');
+        cell.classList.toggle('disabled', !playing || !!val);
       });
+
+      currentPlayerEl.textContent = currentPlayer;
+      if(!playing) {
+        // se não está jogando, statusMsg já foi setado por checkGameEnd
+      } else {
+        statusMsg.textContent = `Vez de ${currentPlayer}`;
+      }
     }
 
-    function checkWinner(){
-      for (const combo of WIN_COMBOS){
+    // Clique na célula
+    function onCellClick(e){
+      const idx = Number(e.currentTarget.dataset.index);
+      makeMove(idx);
+    }
+
+    // Suporta Enter / Space para jogar via teclado
+    function onCellKeyDown(e){
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        const idx = Number(e.currentTarget.dataset.index);
+        makeMove(idx);
+      }
+    }
+
+    // Faz a jogada se válido
+    function makeMove(idx){
+      if(!playing) return;
+      if(board[idx]) return; // já preenchido
+
+      board[idx] = currentPlayer;
+      history.push({ idx, player: currentPlayer });
+      checkGameEnd();
+      if(playing) switchPlayer();
+      render();
+    }
+
+    // Alterna jogador
+    function switchPlayer(){
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      currentPlayerEl.textContent = currentPlayer;
+    }
+
+    // Checa vitória ou empate
+    function checkGameEnd(){
+      for(const combo of WIN_COMBOS){
         const [a,b,c] = combo;
-        if (board[a] && board[a] === board[b] && board[a] === board[c]){
-          return { winner: board[a], combo };
+        if(board[a] && board[a] === board[b] && board[a] === board[c]){
+          // Vitória
+          playing = false;
+          highlightWin(combo);
+          statusMsg.innerHTML = `Vencedor: <strong>${board[a]}</strong>!`;
+          scores[board[a]]++;
+          updateScoreUI();
+          return;
         }
       }
-      return null;
+
+      // Empate?
+      if(board.every(cell => cell !== null)){
+        playing = false;
+        statusMsg.textContent = 'Empate!';
+        scores.D++;
+        updateScoreUI();
+        return;
+      }
     }
 
-    function finishGame(info){
-      finished = true;
-      statusEl.textContent = 'Vencedor: ' + info.winner;
-      // destacar
-      info.combo.forEach(i => {
-        const el = boardEl.querySelector('[data-index="'+i+'"]');
-        if (el) el.classList.add('winner');
+    // Destaca células vencedoras
+    function highlightWin(combo){
+      const cells = boardEl.querySelectorAll('.cell');
+      combo.forEach(i => {
+        cells[i].classList.add('win');
       });
-      disableEmpty();
     }
 
-    function disableEmpty(){
-      boardEl.querySelectorAll('.cell').forEach((el, idx) => {
-        if (!board[idx]) el.classList.add('disabled');
-      });
-    }
-
-    function updateStatus(){
-      playerLabel.textContent = xTurn ? 'X' : 'O';
-      statusEl.innerHTML = 'Vez de: <strong id="playerLabel">' + (xTurn ? 'X' : 'O') + '</strong>';
-    }
-
-    function reset(){
+    // Reinicia partida (mantém placar)
+    function resetBoard(){
       board = Array(9).fill(null);
-      xTurn = true;
-      finished = false;
-      // remover classes e texto
-      initBoard();
+      currentPlayer = 'X';
+      playing = true;
+      history = [];
+      statusMsg.textContent = `Vez de ${currentPlayer}`;
+      // remove classes
+      const cells = boardEl.querySelectorAll('.cell');
+      cells.forEach(c => {
+        c.classList.remove('win','x','o','disabled');
+        c.textContent = '';
+      });
+      render();
+      boardEl.querySelector('.cell')?.focus();
     }
 
-    restartBtn.addEventListener('click', reset);
+    // Zera placar e reinicia
+    function resetScores(){
+      scores = { X:0, O:0, D:0 };
+      updateScoreUI();
+      resetBoard();
+    }
 
-    // iniciar
-    initBoard();
+    // Undo: remove último movimento
+    function undo(){
+      if(history.length === 0 || !playing && !board.includes(null)) {
+        // Se jogo terminou, não desfazemos após terminar (evita estados estranhos).
+        // Porém podemos permitir desfazer se ainda está jogando.
+      }
+      if(history.length === 0) return;
+      // desfaz último
+      const last = history.pop();
+      board[last.idx] = null;
+      currentPlayer = last.player; // volta a vez para quem jogou
+      playing = true;
+      statusMsg.textContent = `Vez de ${currentPlayer} (undo)`;
+      // remove highlights caso existam
+      const cells = boardEl.querySelectorAll('.cell');
+      cells.forEach(c => c.classList.remove('win'));
+      render();
+      // foco na célula desfeita
+      const undoneCell = boardEl.querySelector(`[data-index="${last.idx}"]`);
+      undoneCell?.focus();
+    }
 
-    // expor para console se precisar depurar
-    window.simpleTicTacToe = {
-      get board(){ return board.slice(); },
-      reset
-    };
-  })();
-</script>
+    // Jogada aleatória (só pra diversão/teste)
+    function randomMove(){
+      if(!playing) return;
+      const empties = board.map((v,i) => v ? null : i).filter(v => v !== null);
+      if(empties.length === 0) return;
+      const choice = empties[Math.floor(Math.random()*empties.length)];
+      makeMove(choice);
+    }
+
+    // Eventos UI
+    btnReset.addEventListener('click', resetBoard);
+    btnResetScores.addEventListener('click', () => {
+      if(confirm('Zerar placar?')) resetScores();
+    });
+    btnUndo.addEventListener('click', undo);
+    btnRandom.addEventListener('click', randomMove);
+
+    // Inicialização
+    createBoardUI();
+    render();
+
+    // Acessibilidade extra: atalho teclado para reiniciar (R) e undo (Z)
+    window.addEventListener('keydown', (e) => {
+      if((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+      if(e.key.toLowerCase() === 'r'){ resetBoard(); }
+      if(e.key.toLowerCase() === 'z'){ undo(); }
+    });
+
+    // Foco inicial
+    boardEl.querySelector('.cell')?.focus();
+  </script>
 </body>
 </html>
