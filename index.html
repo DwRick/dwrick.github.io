@@ -3,466 +3,183 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Jogo da Velha — Brabo</title>
+  <title>Jogo da Velha — Simples</title>
   <style>
     :root{
-      --bg1: #0f172a;
-      --bg2: #071033;
-      --card: #0b1220;
-      --accent: #7c3aed;
-      --accent-2: #06b6d4;
-      --glass: rgba(255,255,255,0.03);
-      --muted: #9aa4b2;
-      --win: #10b981;
-      --draw: #f59e0b;
-      --text: #e6eef8;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      --bg:#f3f4f6;
+      --cell:#ffffff;
+      --line:#111827;
+      --x-color:#e11d48;
+      --o-color:#1e40af;
+      --text:#0f172a;
+      font-family: Arial, Helvetica, sans-serif;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0;
-      background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.08), transparent 8%),
-                  radial-gradient(1000px 500px at 90% 90%, rgba(6,182,212,0.06), transparent 6%),
-                  linear-gradient(180deg,var(--bg1),var(--bg2));
-      color:var(--text);
+      min-height:100vh;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:28px;
-    }
-
-    .container{
-      width:100%;
-      max-width:980px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:14px;
+      background:var(--bg);
+      color:var(--text);
       padding:20px;
-      box-shadow: 0 10px 40px rgba(2,6,23,0.65), inset 0 1px 0 rgba(255,255,255,0.02);
-      display:grid;
-      grid-template-columns: 1fr 320px;
-      gap:20px;
-      align-items:start;
     }
-
-    header{
-      grid-column:1 / -1;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:4px;
+    .wrapper{
+      width:320px;
+      text-align:center;
     }
-    h1{font-size:20px;margin:0;letter-spacing:0.2px}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
-
-    .board-card{
-      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
-      padding:18px;
-      border-radius:12px;
-      min-height:420px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:12px;
-    }
-
+    h1{margin:0 0 8px 0;font-size:20px;}
     .board{
-      width:100%;
-      max-width:520px;
-      aspect-ratio:1/1;
       display:grid;
       grid-template-columns:repeat(3,1fr);
-      gap:14px;
-      padding:14px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));
-      border-radius:12px;
-      box-shadow: 0 8px 26px rgba(2,6,23,0.5);
+      gap:6px;
+      margin:12px 0;
     }
-
     .cell{
-      background:var(--glass);
-      border-radius:10px;
+      width:100px;
+      height:100px;
+      background:var(--cell);
+      border:2px solid var(--line);
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size:56px;
+      font-size:42px;
       cursor:pointer;
       user-select:none;
-      transition:transform .12s ease, background .12s ease, box-shadow .12s ease;
-      position:relative;
-      overflow:hidden;
-      aspect-ratio:1/1;
-      color:var(--text);
-      outline: none;
-      border: 1px solid rgba(255,255,255,0.03);
     }
-    .cell:focus{ box-shadow: 0 0 0 4px rgba(124,58,237,0.12); transform: translateY(-3px); }
-    .cell:hover{ transform:translateY(-4px) scale(1.01); background: rgba(255,255,255,0.035); }
-
-    .cell.disabled{ cursor:not-allowed; opacity:0.88; transform:none; }
-
-    .cell.x{ color: #f97316; font-weight:700; }
-    .cell.o{ color: #60a5fa; font-weight:700; }
-
-    .cell.win{
-      background: linear-gradient(90deg, rgba(16,185,129,0.12), rgba(124,58,237,0.06));
-      box-shadow: 0 6px 18px rgba(16,185,129,0.08);
-      transform: scale(1.02);
-    }
-
-    .status{
-      width:100%;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-
-    .status .msg{ font-size:15px; color:var(--text); }
-    .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-
-    .btn{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.04);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:10px;
+    .cell.disabled{ cursor:not-allowed; opacity:0.7; }
+    .info{font-size:14px;margin-top:8px;}
+    button#reset{
+      margin-top:10px;
+      padding:8px 12px;
+      border:none;
+      background:#111827;
+      color:white;
+      border-radius:6px;
       cursor:pointer;
-      font-size:14px;
-      transition: transform .12s ease, background .12s ease;
     }
-    .btn:hover{ transform: translateY(-3px); }
-    .btn.ghost{ background:transparent; border:1px dashed rgba(255,255,255,0.03); }
-
-    aside{
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
-      border-radius:12px;
-      padding:16px;
-      min-height:320px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      align-items:stretch;
-    }
-
-    .score{
-      display:flex;
-      gap:12px;
-      justify-content:space-between;
-      align-items:center;
-      background: rgba(255,255,255,0.02);
-      padding:12px;
-      border-radius:10px;
-    }
-    .score .who{ font-size:13px; color:var(--muted); }
-    .score .num{ font-size:20px; font-weight:700; color:var(--text); }
-
-    .legend{ font-size:13px; color:var(--muted); }
-
-    footer.small{ font-size:12px; color:var(--muted); text-align:center; margin-top:6px; }
-
-    @media (max-width:840px){
-      .container{ grid-template-columns: 1fr; padding:16px;}
-      aside{ order:2; }
-    }
+    .x{ color: var(--x-color); font-weight:700; }
+    .o{ color: var(--o-color); font-weight:700; }
   </style>
 </head>
 <body>
-  <div class="container" role="application" aria-label="Jogo da Velha">
-    <header>
-      <div>
-        <h1>Jogo da Velha — Brabo</h1>
-        <p class="lead">Dois jogadores. Marque 3 no mesmo alinhamento. Suporta teclado e mouse.</p>
-      </div>
+  <div class="wrapper">
+    <h1>Jogo da Velha — Simples</h1>
+    <div class="info" id="status">Vez de X</div>
 
-      <div class="controls" aria-hidden="false">
-        <button class="btn" id="btn-reset" title="Reiniciar partida">Reiniciar partida</button>
-        <button class="btn ghost" id="btn-reset-scores" title="Zerar placar">Zerar placar</button>
-      </div>
-    </header>
+    <div class="board" id="board" aria-label="Tabuleiro">
+      <!-- 9 células serão geradas pelo JS -->
+    </div>
 
-    <main class="board-card" id="main">
-      <div class="status" aria-live="polite">
-        <div class="msg" id="statusMsg">Vez de <strong id="currentPlayer">X</strong></div>
-        <div class="legend">Dica: use Tab para navegar e Enter/Espaço para jogar</div>
-      </div>
-
-      <div class="board" id="board" role="grid" aria-label="tabuleiro do jogo da velha">
-        <!-- 9 cells geradas por JS -->
-      </div>
-
-      <div style="width:100%; display:flex; justify-content:center; gap:10px; margin-top:6px;">
-        <button class="btn" id="btn-undo" title="Desfazer último movimento (não disponível no empate)">Desfazer</button>
-        <button class="btn ghost" id="btn-random" title="Faz jogada aleatória">Jogada aleatória</button>
-      </div>
-
-      <footer class="small">Feito com 💜 — jogue com calma e divirta-se!</footer>
-    </main>
-
-    <aside>
-      <div class="score" aria-hidden="false">
-        <div>
-          <div class="who">Jogador X</div>
-          <div class="num" id="scoreX">0</div>
-        </div>
-        <div>
-          <div class="who">Empates</div>
-          <div class="num" id="scoreD">0</div>
-        </div>
-        <div>
-          <div class="who">Jogador O</div>
-          <div class="num" id="scoreO">0</div>
-        </div>
-      </div>
-
-      <div style="padding:6px 8px; border-radius:8px; background: rgba(255,255,255,0.01);">
-        <strong>Regras rápidas</strong>
-        <p style="margin:6px 0 0 0; color:var(--muted); font-size:13px;">
-          Dois jogadores: X e O. X começa. Quem fizer 3 símbolos em linha (horizontal, vertical ou diagonal) vence.
-        </p>
-      </div>
-
-      <div style="padding:6px 8px; border-radius:8px; background: rgba(255,255,255,0.01);">
-        <strong>Controles</strong>
-        <ul style="margin:6px 0 0 16px; color:var(--muted); font-size:13px;">
-          <li>Mouse: clique na célula.</li>
-          <li>Teclado: Tab para navegar, Enter/Espaço para jogar.</li>
-          <li>Desfazer: desfaz a última jogada.</li>
-        </ul>
-      </div>
-
-      <div style="margin-top:auto; color:var(--muted); font-size:12px;">Dica: para tornar o jogo contra IA, me pede que eu implemente o modo contra computador.</div>
-    </aside>
+    <button id="reset">Reiniciar</button>
   </div>
 
   <script>
-    /* Jogo da Velha — JavaScript
-       Recursos:
-       - Dois jogadores locais (X começa)
-       - Destaque da linha vencedora
-       - Placar persistente via localStorage
-       - Undo da última jogada
-       - Jogada aleatória (útil para testes)
-       - Acessibilidade (tabindex + keyboard)
-    */
-
-    // Elementos
-    const boardEl = document.getElementById('board');
-    const statusMsg = document.getElementById('statusMsg');
-    const currentPlayerEl = document.getElementById('currentPlayer');
-    const btnReset = document.getElementById('btn-reset');
-    const btnResetScores = document.getElementById('btn-reset-scores');
-    const btnUndo = document.getElementById('btn-undo');
-    const btnRandom = document.getElementById('btn-random');
-    const scoreXEl = document.getElementById('scoreX');
-    const scoreOEl = document.getElementById('scoreO');
-    const scoreDEl = document.getElementById('scoreD');
-
-    // Estado
-    let board = Array(9).fill(null); // null | 'X' | 'O'
-    let currentPlayer = 'X';
-    let playing = true;
-    let history = []; // armazenar movimentos para undo
+    // Estado do jogo
     const WIN_COMBOS = [
-      [0,1,2], [3,4,5], [6,7,8], // horizontais
-      [0,3,6], [1,4,7], [2,5,8], // verticais
-      [0,4,8], [2,4,6]           // diagonais
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
     ];
+    let board = Array(9).fill(null); // null | 'X' | 'O'
+    let current = 'X';
+    let playing = true;
 
-    // Placar (localStorage)
-    let scores = { X:0, O:0, D:0 };
-    try {
-      const saved = JSON.parse(localStorage.getItem('tictactoe_scores_v1'));
-      if(saved) scores = saved;
-    } catch(e){ /* ignore */ }
-    updateScoreUI();
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const resetBtn = document.getElementById('reset');
 
-    // Inicializa tabuleiro visual
-    function createBoardUI(){
+    // Cria UI das 9 células
+    function initBoard(){
       boardEl.innerHTML = '';
       for(let i=0;i<9;i++){
-        const cell = document.createElement('button');
-        cell.className = 'cell';
-        cell.setAttribute('data-index', i);
-        cell.setAttribute('role','gridcell');
-        cell.setAttribute('aria-label', 'Célula ' + (i+1));
-        cell.setAttribute('tabindex', '0');
-        cell.addEventListener('click', onCellClick);
-        cell.addEventListener('keydown', onCellKeyDown);
-        boardEl.appendChild(cell);
+        const btn = document.createElement('div');
+        btn.className = 'cell';
+        btn.dataset.index = i;
+        btn.tabIndex = 0;
+        btn.addEventListener('click', onCell);
+        btn.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') onCell(e); });
+        boardEl.appendChild(btn);
       }
+      render();
     }
 
-    // Atualiza display do placar
-    function updateScoreUI(){
-      scoreXEl.textContent = scores.X;
-      scoreOEl.textContent = scores.O;
-      scoreDEl.textContent = scores.D;
-      localStorage.setItem('tictactoe_scores_v1', JSON.stringify(scores));
-    }
-
-    // Render board (textos e classes)
+    // Renderiza estado
     function render(){
       const cells = boardEl.querySelectorAll('.cell');
-      cells.forEach((cell, idx) => {
-        const val = board[idx];
-        cell.textContent = val ? val : '';
-        cell.classList.toggle('x', val === 'X');
-        cell.classList.toggle('o', val === 'O');
-        cell.classList.toggle('disabled', !playing || !!val);
+      cells.forEach((c, i) => {
+        c.textContent = board[i] ? board[i] : '';
+        c.classList.toggle('x', board[i] === 'X');
+        c.classList.toggle('o', board[i] === 'O');
+        c.classList.toggle('disabled', !playing || board[i]);
       });
-
-      currentPlayerEl.textContent = currentPlayer;
-      if(!playing) {
-        // se não está jogando, statusMsg já foi setado por checkGameEnd
-      } else {
-        statusMsg.textContent = `Vez de ${currentPlayer}`;
+      if(playing){
+        statusEl.textContent = 'Vez de ' + current;
       }
     }
 
     // Clique na célula
-    function onCellClick(e){
+    function onCell(e){
+      if(!playing) return;
       const idx = Number(e.currentTarget.dataset.index);
-      makeMove(idx);
-    }
-
-    // Suporta Enter / Space para jogar via teclado
-    function onCellKeyDown(e){
-      if(e.key === 'Enter' || e.key === ' '){
-        e.preventDefault();
-        const idx = Number(e.currentTarget.dataset.index);
-        makeMove(idx);
+      if(board[idx]) return; // já preenchida
+      board[idx] = current;
+      // checar fim
+      const winner = checkWinner();
+      if(winner){
+        playing = false;
+        statusEl.textContent = 'Vencedor: ' + winner;
+        highlightWin(winner);
+      } else if(board.every(Boolean)){
+        playing = false;
+        statusEl.textContent = 'Empate!';
+      } else {
+        current = current === 'X' ? 'O' : 'X';
+        render();
       }
     }
 
-    // Faz a jogada se válido
-    function makeMove(idx){
-      if(!playing) return;
-      if(board[idx]) return; // já preenchido
-
-      board[idx] = currentPlayer;
-      history.push({ idx, player: currentPlayer });
-      checkGameEnd();
-      if(playing) switchPlayer();
-      render();
-    }
-
-    // Alterna jogador
-    function switchPlayer(){
-      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-      currentPlayerEl.textContent = currentPlayer;
-    }
-
-    // Checa vitória ou empate
-    function checkGameEnd(){
+    // Checa vencedor — retorna 'X' ou 'O' ou null
+    function checkWinner(){
       for(const combo of WIN_COMBOS){
         const [a,b,c] = combo;
         if(board[a] && board[a] === board[b] && board[a] === board[c]){
-          // Vitória
-          playing = false;
-          highlightWin(combo);
-          statusMsg.innerHTML = `Vencedor: <strong>${board[a]}</strong>!`;
-          scores[board[a]]++;
-          updateScoreUI();
-          return;
+          return board[a];
         }
       }
+      return null;
+    }
 
-      // Empate?
-      if(board.every(cell => cell !== null)){
-        playing = false;
-        statusMsg.textContent = 'Empate!';
-        scores.D++;
-        updateScoreUI();
-        return;
+    // Destaca linha vencedora (simples: borda nas 3 células)
+    function highlightWin(winner){
+      for(const combo of WIN_COMBOS){
+        const [a,b,c] = combo;
+        if(board[a] && board[a] === board[b] && board[a] === board[c]){
+          // aplica estilo simples
+          [a,b,c].forEach(i => {
+            const cell = boardEl.querySelector(`[data-index='${i}']`);
+            if(cell) cell.style.borderColor = 'gold';
+          });
+          break;
+        }
       }
     }
 
-    // Destaca células vencedoras
-    function highlightWin(combo){
-      const cells = boardEl.querySelectorAll('.cell');
-      combo.forEach(i => {
-        cells[i].classList.add('win');
-      });
-    }
-
-    // Reinicia partida (mantém placar)
-    function resetBoard(){
+    // Reiniciar jogo
+    function reset(){
       board = Array(9).fill(null);
-      currentPlayer = 'X';
+      current = 'X';
       playing = true;
-      history = [];
-      statusMsg.textContent = `Vez de ${currentPlayer}`;
-      // remove classes
+      // remove estilos de destaque
       const cells = boardEl.querySelectorAll('.cell');
-      cells.forEach(c => {
-        c.classList.remove('win','x','o','disabled');
-        c.textContent = '';
-      });
+      cells.forEach(c => { c.style.borderColor = ''; });
+      statusEl.textContent = 'Vez de ' + current;
       render();
-      boardEl.querySelector('.cell')?.focus();
     }
-
-    // Zera placar e reinicia
-    function resetScores(){
-      scores = { X:0, O:0, D:0 };
-      updateScoreUI();
-      resetBoard();
-    }
-
-    // Undo: remove último movimento
-    function undo(){
-      if(history.length === 0 || !playing && !board.includes(null)) {
-        // Se jogo terminou, não desfazemos após terminar (evita estados estranhos).
-        // Porém podemos permitir desfazer se ainda está jogando.
-      }
-      if(history.length === 0) return;
-      // desfaz último
-      const last = history.pop();
-      board[last.idx] = null;
-      currentPlayer = last.player; // volta a vez para quem jogou
-      playing = true;
-      statusMsg.textContent = `Vez de ${currentPlayer} (undo)`;
-      // remove highlights caso existam
-      const cells = boardEl.querySelectorAll('.cell');
-      cells.forEach(c => c.classList.remove('win'));
-      render();
-      // foco na célula desfeita
-      const undoneCell = boardEl.querySelector(`[data-index="${last.idx}"]`);
-      undoneCell?.focus();
-    }
-
-    // Jogada aleatória (só pra diversão/teste)
-    function randomMove(){
-      if(!playing) return;
-      const empties = board.map((v,i) => v ? null : i).filter(v => v !== null);
-      if(empties.length === 0) return;
-      const choice = empties[Math.floor(Math.random()*empties.length)];
-      makeMove(choice);
-    }
-
-    // Eventos UI
-    btnReset.addEventListener('click', resetBoard);
-    btnResetScores.addEventListener('click', () => {
-      if(confirm('Zerar placar?')) resetScores();
-    });
-    btnUndo.addEventListener('click', undo);
-    btnRandom.addEventListener('click', randomMove);
 
     // Inicialização
-    createBoardUI();
-    render();
-
-    // Acessibilidade extra: atalho teclado para reiniciar (R) e undo (Z)
-    window.addEventListener('keydown', (e) => {
-      if((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-      if(e.key.toLowerCase() === 'r'){ resetBoard(); }
-      if(e.key.toLowerCase() === 'z'){ undo(); }
-    });
-
-    // Foco inicial
-    boardEl.querySelector('.cell')?.focus();
+    initBoard();
+    resetBtn.addEventListener('click', reset);
   </script>
 </body>
 </html>
