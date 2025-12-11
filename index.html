@@ -3,183 +3,316 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Jogo da Velha — 2025</title>
+  <title>Calculadora de Aprovação - UNINASSAU</title>
   <style>
     :root{
-      --bg:#f3f4f6;
-      --cell:#ffffff;
-      --line:#111827;
-      --x-color:#e11d48;
-      --o-color:#1e40af;
-      --text:#0f172a;
-      font-family: Arial, Helvetica, sans-serif;
+      --bg:#073b63;
+      --card:#ffffff;
+      --accent:#0b63a8;
+      --muted:#9aa8b7;
+      --success:#0b9b53;
+      --danger:#d9534f;
+      --warning:#f0ad4e;
+      font-family: "Helvetica Neue", Arial, sans-serif;
     }
+
+    *{box-sizing:border-box}
+
     body{
       margin:0;
       min-height:100vh;
+      background: linear-gradient(180deg, var(--bg) 0%, #0a3b63 70%);
       display:flex;
       align-items:center;
       justify-content:center;
-      background:var(--bg);
-      color:var(--text);
-      padding:20px;
+      padding:24px;
     }
-    .wrapper{
-      width:320px;
+
+    .container{
+      width:100%;
+      max-width:420px;
+      background:var(--card);
+      border-radius:12px;
+      padding:28px;
+      box-shadow: 0 14px 30px rgba(3,10,28,0.45);
+      position:relative;
+    }
+
+    header{
       text-align:center;
+      margin-bottom:8px;
     }
-    h1{margin:0 0 8px 0;font-size:20px;}
-    .board{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:6px;
-      margin:12px 0;
+
+    h1{
+      margin:0;
+      color:var(--accent);
+      font-size:28px;
+      letter-spacing:1px;
     }
-    .cell{
-      width:100px;
-      height:100px;
-      background:var(--cell);
-      border:2px solid var(--line);
+
+    p.subtitle{
+      margin:8px 0 22px;
+      color:#333;
+      font-weight:600;
+    }
+
+    label{
+      display:block;
+      margin-bottom:8px;
+      color:#333;
+      font-weight:600;
+    }
+
+    .field{
+      margin-bottom:16px;
+    }
+
+    input[type="number"]{
+      width:100%;
+      padding:12px 14px;
+      border-radius:8px;
+      border:1px solid #e0e6ea;
+      font-size:15px;
+      outline:none;
+      transition:box-shadow .15s, border-color .15s;
+    }
+
+    input[type="number"]:focus{
+      box-shadow:0 0 0 4px rgba(11,99,168,0.12);
+      border-color:var(--accent);
+    }
+
+    .actions{
       display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:42px;
-      cursor:pointer;
-      user-select:none;
+      gap:10px;
+      margin-top:6px;
     }
-    .cell.disabled{ cursor:not-allowed; opacity:0.7; }
-    .info{font-size:14px;margin-top:8px;}
-    button#reset{
-      margin-top:10px;
-      padding:8px 12px;
-      border:none;
-      background:#111827;
+
+    button{
+      flex:1;
+      padding:12px 14px;
+      border-radius:8px;
+      border:0;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    button.primary{
+      background:linear-gradient(180deg,var(--accent), #0a4f85);
       color:white;
-      border-radius:6px;
-      cursor:pointer;
+      box-shadow: 0 6px 18px rgba(7,44,82,0.28);
     }
-    .x{ color: var(--x-color); font-weight:700; }
-    .o{ color: var(--o-color); font-weight:700; }
+
+    button.ghost{
+      background:transparent;
+      border:1px solid #e1e6ea;
+      color:#333;
+      font-weight:600;
+    }
+
+    .result{
+      margin-top:18px;
+      padding:14px;
+      border-radius:8px;
+      background:#f7f9fb;
+      border:1px solid #eef3f7;
+      color:#111;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:13px;
+      color:white;
+    }
+
+    .approved{ background:var(--success); }
+    .final{ background:var(--warning); color:#222; }
+    .failed{ background:var(--danger); }
+
+    .muted{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    footer{
+      margin-top:22px;
+      text-align:center;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    /* mobile small tweaks */
+    @media (max-width:420px){
+      .container{padding:20px}
+      h1{font-size:24px}
+    }
   </style>
 </head>
 <body>
-  <div class="wrapper">
-    <h1>Jogo da Velha — 2025</h1>
-    <div class="info" id="status">Vez de X</div>
+  <main class="container" role="main" aria-labelledby="title">
+    <header>
+      <h1 id="title">UNINASSAU</h1>
+      <p class="subtitle">Calculadora de Aprovação</p>
+    </header>
 
-    <div class="board" id="board" aria-label="Tabuleiro">
-      <!-- 9 células serão geradas pelo JS -->
-    </div>
+    <form id="calcForm" onsubmit="return false;" aria-describedby="instructions">
+      <div id="instructions" class="muted" style="margin-bottom:14px;">
+        MP = (AV1 + AV2) / 2. <br>
+        Se MP ≥ 7,0 → Aprovado. Se 4,0 ≤ MP < 7,0 → Exame Final. Se MP < 4,0 → Reprovado direto.
+      </div>
 
-    <button id="reset">Reiniciar</button>
-  </div>
+      <div class="field">
+        <label for="av1">Nota AV1</label>
+        <input id="av1" type="number" step="0.01" min="0" max="10" placeholder="Digite a nota da AV1 (0–10)" required>
+      </div>
+
+      <div class="field">
+        <label for="av2">Nota AV2</label>
+        <input id="av2" type="number" step="0.01" min="0" max="10" placeholder="Digite a nota da AV2 (0–10)" required>
+      </div>
+
+      <div class="field">
+        <label for="final">Nota Final (se aplicável)</label>
+        <input id="final" type="number" step="0.01" min="0" max="10" placeholder="Nota da Avaliação Final (opcional)">
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="btnCalc">Calcular</button>
+        <button class="ghost" id="btnClear" type="button">Limpar</button>
+      </div>
+
+      <div id="output" class="result" style="display:none" aria-live="polite"></div>
+    </form>
+
+    <footer>
+      Desenvolvimento: Prof. Antonio Carlos — UNINASSAU - Garanhuns
+    </footer>
+  </main>
 
   <script>
-    // Estado do jogo
-    const WIN_COMBOS = [
-      [0,1,2],[3,4,5],[6,7,8],
-      [0,3,6],[1,4,7],[2,5,8],
-      [0,4,8],[2,4,6]
-    ];
-    let board = Array(9).fill(null); // null | 'X' | 'O'
-    let current = 'X';
-    let playing = true;
-
-    const boardEl = document.getElementById('board');
-    const statusEl = document.getElementById('status');
-    const resetBtn = document.getElementById('reset');
-
-    // Cria UI das 9 células
-    function initBoard(){
-      boardEl.innerHTML = '';
-      for(let i=0;i<9;i++){
-        const btn = document.createElement('div');
-        btn.className = 'cell';
-        btn.dataset.index = i;
-        btn.tabIndex = 0;
-        btn.addEventListener('click', onCell);
-        btn.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') onCell(e); });
-        boardEl.appendChild(btn);
-      }
-      render();
+    // Função utilitária: formata número com 2 casas decimais, usando ponto como separador.
+    function fmt(n){
+      return Number(n).toFixed(2);
     }
 
-    // Renderiza estado
-    function render(){
-      const cells = boardEl.querySelectorAll('.cell');
-      cells.forEach((c, i) => {
-        c.textContent = board[i] ? board[i] : '';
-        c.classList.toggle('x', board[i] === 'X');
-        c.classList.toggle('o', board[i] === 'O');
-        c.classList.toggle('disabled', !playing || board[i]);
-      });
-      if(playing){
-        statusEl.textContent = 'Vez de ' + current;
-      }
+    function validaNota(v){
+      if (v === "" || v === null || isNaN(v)) return false;
+      const n = Number(v);
+      return n >= 0 && n <= 10;
     }
 
-    // Clique na célula
-    function onCell(e){
-      if(!playing) return;
-      const idx = Number(e.currentTarget.dataset.index);
-      if(board[idx]) return; // já preenchida
-      board[idx] = current;
-      // checar fim
-      const winner = checkWinner();
-      if(winner){
-        playing = false;
-        statusEl.textContent = 'Vencedor: ' + winner;
-        highlightWin(winner);
-      } else if(board.every(Boolean)){
-        playing = false;
-        statusEl.textContent = 'Empate!';
-      } else {
-        current = current === 'X' ? 'O' : 'X';
-        render();
-      }
-    }
+    document.getElementById('btnCalc').addEventListener('click', () => {
+      const av1El = document.getElementById('av1');
+      const av2El = document.getElementById('av2');
+      const finalEl = document.getElementById('final');
+      const output = document.getElementById('output');
 
-    // Checa vencedor — retorna 'X' ou 'O' ou null
-    function checkWinner(){
-      for(const combo of WIN_COMBOS){
-        const [a,b,c] = combo;
-        if(board[a] && board[a] === board[b] && board[a] === board[c]){
-          return board[a];
+      const av1v = av1El.value.trim();
+      const av2v = av2El.value.trim();
+      const finalv = finalEl.value.trim();
+
+      // validações
+      if (!validaNota(av1v)){
+        output.style.display = 'block';
+        output.innerHTML = '<strong>Erro:</strong> Insira uma nota válida para AV1 (0–10).';
+        output.style.borderColor = '#fdecea';
+        output.style.background = '#fff5f5';
+        return;
+      }
+      if (!validaNota(av2v)){
+        output.style.display = 'block';
+        output.innerHTML = '<strong>Erro:</strong> Insira uma nota válida para AV2 (0–10).';
+        output.style.borderColor = '#fdecea';
+        output.style.background = '#fff5f5';
+        return;
+      }
+
+      const AV1 = Number(av1v);
+      const AV2 = Number(av2v);
+      const MP = (AV1 + AV2) / 2;
+
+      // case: MP >= 7.0 => aprovado
+      // case: 4.0 <= MP < 7.0 => exame final
+      // case: MP < 4.0 => reprovado direto
+      let html = '';
+      html += `<div style="margin-bottom:8px"><strong>Média Parcial (MP):</strong> ${fmt(MP)}</div>`;
+
+      if (MP >= 7.0) {
+        html += `<div><span class="badge approved">APROVADO</span></div>`;
+        // if there's a final provided, ignore it (not necessary)
+        output.style.display = 'block';
+        output.style.borderColor = '#e6f8ef';
+        output.style.background = '#f6fffb';
+        output.innerHTML = html;
+        return;
+      }
+
+      // MP < 7
+      if (MP >= 4.0) {
+        // precisa de exame final
+        html += `<div style="margin-bottom:10px"><span class="badge final">EXAME FINAL</span> — MP está entre 4,0 e 6,99</div>`;
+
+        // informar a nota mínima necessária no Final para ser aprovado
+        // (MP + x)/2 >= 5  => x >= 10 - MP
+        const required = 10 - MP;
+        const requiredClamped = Math.max(0, Math.min(10, required));
+        html += `<div class="muted" style="margin-bottom:8px">Nota mínima necessária no Final para ser aprovado: <strong>${fmt(requiredClamped)}</strong></div>`;
+
+        // se o usuário informou nota final, calcular Média Final
+        if (validaNota(finalv) && finalv !== "") {
+          const FINAL = Number(finalv);
+          const MF = (MP + FINAL) / 2;
+          html += `<div style="margin-top:8px"><strong>Média Final (MF):</strong> ${fmt(MF)}</div>`;
+          if (MF >= 5.0) {
+            html += `<div style="margin-top:8px"><span class="badge approved">APROVADO NA FINAL</span></div>`;
+            output.style.borderColor = '#e6f8ef';
+            output.style.background = '#f6fffb';
+          } else {
+            html += `<div style="margin-top:8px"><span class="badge failed">REPROVADO</span></div>`;
+            output.style.borderColor = '#fdecea';
+            output.style.background = '#fff5f5';
+          }
+        } else {
+          html += `<div class="muted" style="margin-top:8px">Se você fizer a Avaliação Final, informe a nota para calcular a Média Final (MF = (MP + Final)/2).</div>`;
+          output.style.borderColor = '#fff4e6';
+          output.style.background = '#fffdf7';
         }
+
+        output.style.display = 'block';
+        output.innerHTML = html;
+        return;
       }
-      return null;
-    }
 
-    // Destaca linha vencedora (simples: borda nas 3 células)
-    function highlightWin(winner){
-      for(const combo of WIN_COMBOS){
-        const [a,b,c] = combo;
-        if(board[a] && board[a] === board[b] && board[a] === board[c]){
-          // aplica estilo simples
-          [a,b,c].forEach(i => {
-            const cell = boardEl.querySelector(`[data-index='${i}']`);
-            if(cell) cell.style.borderColor = 'gold';
-          });
-          break;
-        }
+      // MP < 4.0 => reprovado direto
+      html += `<div style="margin-top:8px"><span class="badge failed">REPROVADO</span></div>`;
+      html += `<div class="muted" style="margin-top:8px">MP < 4,0 — aluno reprovado sem possibilidade de exame final conforme regra informada.</div>`;
+      output.style.display = 'block';
+      output.style.borderColor = '#fdecea';
+      output.style.background = '#fff5f5';
+      output.innerHTML = html;
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      document.getElementById('av1').value = '';
+      document.getElementById('av2').value = '';
+      document.getElementById('final').value = '';
+      const output = document.getElementById('output');
+      output.style.display = 'none';
+      output.innerHTML = '';
+    });
+
+    // Pequena melhoria de UX: quando o usuário preenche final e clica Enter, aciona calcular
+    document.getElementById('final').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnCalc').click();
       }
-    }
+    });
 
-    // Reiniciar jogo
-    function reset(){
-      board = Array(9).fill(null);
-      current = 'X';
-      playing = true;
-      // remove estilos de destaque
-      const cells = boardEl.querySelectorAll('.cell');
-      cells.forEach(c => { c.style.borderColor = ''; });
-      statusEl.textContent = 'Vez de ' + current;
-      render();
-    }
-
-    // Inicialização
-    initBoard();
-    resetBtn.addEventListener('click', reset);
   </script>
 </body>
 </html>
